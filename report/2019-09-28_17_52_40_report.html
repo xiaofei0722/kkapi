@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8"/>
+    <title>Test Report</title>
+    <link href="assets/style.css" rel="stylesheet" type="text/css"/></head>
+  <body onLoad="init()">
+    <script>/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this file,
+ * You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+
+function toArray(iter) {
+    if (iter === null) {
+        return null;
+    }
+    return Array.prototype.slice.call(iter);
+}
+
+function find(selector, elem) {
+    if (!elem) {
+        elem = document;
+    }
+    return elem.querySelector(selector);
+}
+
+function find_all(selector, elem) {
+    if (!elem) {
+        elem = document;
+    }
+    return toArray(elem.querySelectorAll(selector));
+}
+
+function sort_column(elem) {
+    toggle_sort_states(elem);
+    var colIndex = toArray(elem.parentNode.childNodes).indexOf(elem);
+    var key;
+    if (elem.classList.contains('numeric')) {
+        key = key_num;
+    } else if (elem.classList.contains('result')) {
+        key = key_result;
+    } else {
+        key = key_alpha;
+    }
+    sort_table(elem, key(colIndex));
+}
+
+function show_all_extras() {
+    find_all('.col-result').forEach(show_extras);
+}
+
+function hide_all_extras() {
+    find_all('.col-result').forEach(hide_extras);
+}
+
+function show_extras(colresult_elem) {
+    var extras = colresult_elem.parentNode.nextElementSibling;
+    var expandcollapse = colresult_elem.firstElementChild;
+    extras.classList.remove("collapsed");
+    expandcollapse.classList.remove("expander");
+    expandcollapse.classList.add("collapser");
+}
+
+function hide_extras(colresult_elem) {
+    var extras = colresult_elem.parentNode.nextElementSibling;
+    var expandcollapse = colresult_elem.firstElementChild;
+    extras.classList.add("collapsed");
+    expandcollapse.classList.remove("collapser");
+    expandcollapse.classList.add("expander");
+}
+
+function show_filters() {
+    var filter_items = document.getElementsByClassName('filter');
+    for (var i = 0; i < filter_items.length; i++)
+        filter_items[i].hidden = false;
+}
+
+function add_collapse() {
+    // Add links for show/hide all
+    var resulttable = find('table#results-table');
+    var showhideall = document.createElement("p");
+    showhideall.innerHTML = '<a href="javascript:show_all_extras()">Show all details</a> / ' +
+                            '<a href="javascript:hide_all_extras()">Hide all details</a>';
+    resulttable.parentElement.insertBefore(showhideall, resulttable);
+
+    // Add show/hide link to each result
+    find_all('.col-result').forEach(function(elem) {
+        var collapsed = get_query_parameter('collapsed') || 'Passed';
+        var extras = elem.parentNode.nextElementSibling;
+        var expandcollapse = document.createElement("span");
+        if (collapsed.includes(elem.innerHTML)) {
+            extras.classList.add("collapsed");
+            expandcollapse.classList.add("expander");
+        } else {
+            expandcollapse.classList.add("collapser");
+        }
+        elem.appendChild(expandcollapse);
+
+        elem.addEventListener("click", function(event) {
+            if (event.currentTarget.parentNode.nextElementSibling.classList.contains("collapsed")) {
+                show_extras(event.currentTarget);
+            } else {
+                hide_extras(event.currentTarget);
+            }
+        });
+    })
+}
+
+function get_query_parameter(name) {
+    var match = RegExp('[?&]' + name + '=([^&]*)').exec(window.location.search);
+    return match && decodeURIComponent(match[1].replace(/\+/g, ' '));
+}
+
+function init () {
+    reset_sort_headers();
+
+    add_collapse();
+
+    show_filters();
+
+    toggle_sort_states(find('.initial-sort'));
+
+    find_all('.sortable').forEach(function(elem) {
+        elem.addEventListener("click",
+                              function(event) {
+                                  sort_column(elem);
+                              }, false)
+    });
+
+};
+
+function sort_table(clicked, key_func) {
+    var rows = find_all('.results-table-row');
+    var reversed = !clicked.classList.contains('asc');
+    var sorted_rows = sort(rows, key_func, reversed);
+    /* Whole table is removed here because browsers acts much slower
+     * when appending existing elements.
+     */
+    var thead = document.getElementById("results-table-head");
+    document.getElementById('results-table').remove();
+    var parent = document.createElement("table");
+    parent.id = "results-table";
+    parent.appendChild(thead);
+    sorted_rows.forEach(function(elem) {
+        parent.appendChild(elem);
+    });
+    document.getElementsByTagName("BODY")[0].appendChild(parent);
+}
+
+function sort(items, key_func, reversed) {
+    var sort_array = items.map(function(item, i) {
+        return [key_func(item), i];
+    });
+    var multiplier = reversed ? -1 : 1;
+
+    sort_array.sort(function(a, b) {
+        var key_a = a[0];
+        var key_b = b[0];
+        return multiplier * (key_a >= key_b ? 1 : -1);
+    });
+
+    return sort_array.map(function(item) {
+        var index = item[1];
+        return items[index];
+    });
+}
+
+function key_alpha(col_index) {
+    return function(elem) {
+        return elem.childNodes[1].childNodes[col_index].firstChild.data.toLowerCase();
+    };
+}
+
+function key_num(col_index) {
+    return function(elem) {
+        return parseFloat(elem.childNodes[1].childNodes[col_index].firstChild.data);
+    };
+}
+
+function key_result(col_index) {
+    return function(elem) {
+        var strings = ['Error', 'Failed', 'Rerun', 'XFailed', 'XPassed',
+                       'Skipped', 'Passed'];
+        return strings.indexOf(elem.childNodes[1].childNodes[col_index].firstChild.data);
+    };
+}
+
+function reset_sort_headers() {
+    find_all('.sort-icon').forEach(function(elem) {
+        elem.parentNode.removeChild(elem);
+    });
+    find_all('.sortable').forEach(function(elem) {
+        var icon = document.createElement("div");
+        icon.className = "sort-icon";
+        icon.textContent = "vvv";
+        elem.insertBefore(icon, elem.firstChild);
+        elem.classList.remove("desc", "active");
+        elem.classList.add("asc", "inactive");
+    });
+}
+
+function toggle_sort_states(elem) {
+    //if active, toggle between asc and desc
+    if (elem.classList.contains('active')) {
+        elem.classList.toggle('asc');
+        elem.classList.toggle('desc');
+    }
+
+    //if inactive, reset all other functions and add ascending active
+    if (elem.classList.contains('inactive')) {
+        reset_sort_headers();
+        elem.classList.remove('inactive');
+        elem.classList.add('active');
+    }
+}
+
+function is_all_rows_hidden(value) {
+  return value.hidden == false;
+}
+
+function filter_table(elem) {
+    var outcome_att = "data-test-result";
+    var outcome = elem.getAttribute(outcome_att);
+    class_outcome = outcome + " results-table-row";
+    var outcome_rows = document.getElementsByClassName(class_outcome);
+
+    for(var i = 0; i < outcome_rows.length; i++){
+        outcome_rows[i].hidden = !elem.checked;
+    }
+
+    var rows = find_all('.results-table-row').filter(is_all_rows_hidden);
+    var all_rows_hidden = rows.length == 0 ? true : false;
+    var not_found_message = document.getElementById("not-found-message");
+    not_found_message.hidden = !all_rows_hidden;
+}
+</script>
+    <h1>2019-09-28_17_52_40_report.html</h1>
+    <p>Report generated on 28-Sep-2019 at 17:52:41 by <a href="https://pypi.python.org/pypi/pytest-html">pytest-html</a> v1.20.0</p>
+    <h2>Environment</h2>
+    <table id="environment">
+      <tr>
+        <td>Packages</td>
+        <td>{&apos;pytest&apos;: &apos;3.6.0&apos;, &apos;py&apos;: &apos;1.7.0&apos;, &apos;pluggy&apos;: &apos;0.6.0&apos;}</td></tr>
+      <tr>
+        <td>Platform</td>
+        <td>Windows-10-10.0.17134-SP0</td></tr>
+      <tr>
+        <td>Plugins</td>
+        <td>{&apos;rerunfailures&apos;: &apos;5.0&apos;, &apos;metadata&apos;: &apos;1.8.0&apos;, &apos;html&apos;: &apos;1.20.0&apos;, &apos;allure-adaptor&apos;: &apos;1.7.10&apos;}</td></tr>
+      <tr>
+        <td>Python</td>
+        <td>3.7.4</td></tr></table>
+    <h2>Summary</h2>
+    <p>1 tests ran in 0.89 seconds. </p>
+    <p class="filter" hidden="true">(Un)check the boxes to filter the results.</p><input checked="true" class="filter" data-test-result="passed" hidden="true" name="filter_checkbox" onChange="filter_table(this)" type="checkbox"/><span class="passed">1 passed</span>, <input checked="true" class="filter" data-test-result="skipped" disabled="true" hidden="true" name="filter_checkbox" onChange="filter_table(this)" type="checkbox"/><span class="skipped">0 skipped</span>, <input checked="true" class="filter" data-test-result="failed" disabled="true" hidden="true" name="filter_checkbox" onChange="filter_table(this)" type="checkbox"/><span class="failed">0 failed</span>, <input checked="true" class="filter" data-test-result="error" disabled="true" hidden="true" name="filter_checkbox" onChange="filter_table(this)" type="checkbox"/><span class="error">0 errors</span>, <input checked="true" class="filter" data-test-result="xfailed" disabled="true" hidden="true" name="filter_checkbox" onChange="filter_table(this)" type="checkbox"/><span class="xfailed">0 expected failures</span>, <input checked="true" class="filter" data-test-result="xpassed" disabled="true" hidden="true" name="filter_checkbox" onChange="filter_table(this)" type="checkbox"/><span class="xpassed">0 unexpected passes</span>, <input checked="true" class="filter" data-test-result="rerun" disabled="true" hidden="true" name="filter_checkbox" onChange="filter_table(this)" type="checkbox"/><span class="rerun">0 rerun</span>
+    <h2>Results</h2>
+    <table id="results-table">
+      <thead id="results-table-head">
+        <tr>
+          <th class="sortable result initial-sort" col="result">Result</th>
+          <th class="sortable" col="name">Test</th>
+          <th class="sortable numeric" col="duration">Duration</th>
+          <th>Links</th></tr>
+        <tr hidden="true" id="not-found-message">
+          <th colspan="4">No results found. Try to check the filters</th></tr></thead>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test_case/test_case.py::Test::test__1</td>
+          <td class="col-duration">0.36</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="log">------------------------------ Captured log call -------------------------------<br/>test_case.py               131 INFO     用例描述====&gt;访问百度
+testBase.py                131 INFO     请求方式====&gt;GET
+testBase.py                132 INFO     请求地址====&gt;https://www.baidu.com
+testBase.py                133 INFO     请求头====&gt;&quot;&quot;
+testBase.py                134 INFO     请求参数====&gt;&quot;&quot;
+testBase.py                135 INFO     请求体====&gt;null
+testBase.py                136 INFO     上传附件为======&gt;None
+testBase.py                137 INFO     Cookies====&gt;&quot;&quot;
+testBase.py                138 INFO     接口响应状态码====&gt;200
+testBase.py                139 INFO     接口响应头为====&gt;{&#x27;Accept-Ranges&#x27;: &#x27;bytes&#x27;, &#x27;Cache-Control&#x27;: &#x27;no-cache&#x27;, &#x27;Connection&#x27;: &#x27;Keep-Alive&#x27;, &#x27;Content-Length&#x27;: &#x27;14722&#x27;, &#x27;Content-Type&#x27;: &#x27;text/html&#x27;, &#x27;Date&#x27;: &#x27;Sat, 28 Sep 2019 09:52:42 GMT&#x27;, &#x27;Etag&#x27;: &#x27;&quot;5d7f08a7-3982&quot;&#x27;, &#x27;Last-Modified&#x27;: &#x27;Mon, 16 Sep 2019 03:59:35 GMT&#x27;, &#x27;P3p&#x27;: &#x27;CP=&quot; OTI DSP COR IVA OUR IND COM &quot;&#x27;, &#x27;Pragma&#x27;: &#x27;no-cache&#x27;, &#x27;Server&#x27;: &#x27;BWS/1.1&#x27;, &#x27;Set-Cookie&#x27;: &#x27;BAIDUID=32D1E57CAA724D890B4C83A9ECD578C2:FG=1; expires=Thu, 31-Dec-37 23:55:55 GMT; max-age=2147483647; path=/; domain=.baidu.com, BIDUPSID=32D1E57CAA724D890B4C83A9ECD578C2; expires=Thu, 31-Dec-37 23:55:55 GMT; max-age=2147483647; path=/; domain=.baidu.com, PSTM=1569664362; expires=Thu, 31-Dec-37 23:55:55 GMT; max-age=2147483647; path=/; domain=.baidu.com&#x27;, &#x27;Vary&#x27;: &#x27;Accept-Encoding&#x27;, &#x27;X-Ua-Compatible&#x27;: &#x27;IE=Edge,chrome=1&#x27;}
+testBase.py                140 INFO     接口响应体为====&gt;&lt;!DOCTYPE html&gt;&lt;!--STATUS OK--&gt;
+&lt;html&gt;
+&lt;head&gt;
+	&lt;meta http-equiv=&quot;content-type&quot; content=&quot;text/html;charset=utf-8&quot;&gt;
+	&lt;meta http-equiv=&quot;X-UA-Compatible&quot; content=&quot;IE=Edge&quot;&gt;
+	&lt;link rel=&quot;dns-prefetch&quot; href=&quot;//s1.bdstatic.com&quot;/&gt;
+	&lt;link rel=&quot;dns-prefetch&quot; href=&quot;//t1.baidu.com&quot;/&gt;
+	&lt;link rel=&quot;dns-prefetch&quot; href=&quot;//t2.baidu.com&quot;/&gt;
+	&lt;link rel=&quot;dns-prefetch&quot; href=&quot;//t3.baidu.com&quot;/&gt;
+	&lt;link rel=&quot;dns-prefetch&quot; href=&quot;//t10.baidu.com&quot;/&gt;
+	&lt;link rel=&quot;dns-prefetch&quot; href=&quot;//t11.baidu.com&quot;/&gt;
+	&lt;link rel=&quot;dns-prefetch&quot; href=&quot;//t12.baidu.com&quot;/&gt;
+	&lt;link rel=&quot;dns-prefetch&quot; href=&quot;//b1.bdstatic.com&quot;/&gt;
+	&lt;title&gt;ç¾åº¦ä¸ä¸ï¼ä½ å°±ç¥é&lt;/title&gt;
+	&lt;link href=&quot;https://ss1.bdstatic.com/5eN1bjq8AAUYm2zgoY3K/r/www/cache/static/home/css/index.css&quot; rel=&quot;stylesheet&quot; type=&quot;text/css&quot; /&gt;
+	&lt;!--[if lte IE 8]&gt;&lt;style index=&quot;index&quot; &gt;#content{height:480px\9}#m{top:260px\9}&lt;/style&gt;&lt;![endif]--&gt;
+	&lt;!--[if IE 8]&gt;&lt;style index=&quot;index&quot; &gt;#u1 a.mnav,#u1 a.mnav:visited{font-family:simsun}&lt;/style&gt;&lt;![endif]--&gt;
+	&lt;script&gt;var hashMatch = document.location.href.match(/#+(.*wd=[^&amp;].+)/);if (hashMatch &amp;&amp; hashMatch[0] &amp;&amp; hashMatch[1]) {document.location.replace(&quot;http://&quot;+location.host+&quot;/s?&quot;+hashMatch[1]);}var ns_c = function(){};&lt;/script&gt;
+	&lt;script&gt;function h(obj){obj.style.behavior=&#x27;url(#default#homepage)&#x27;;var a = obj.setHomePage(&#x27;//www.baidu.com/&#x27;);}&lt;/script&gt;
+	&lt;noscript&gt;&lt;meta http-equiv=&quot;refresh&quot; content=&quot;0; url=/baidu.html?from=noscript&quot;/&gt;&lt;/noscript&gt;
+	&lt;script&gt;window._ASYNC_START=new Date().getTime();&lt;/script&gt;
+&lt;/head&gt;
+&lt;body link=&quot;#0000cc&quot;&gt;&lt;div id=&quot;wrapper&quot; style=&quot;display:none;&quot;&gt;&lt;div id=&quot;u&quot;&gt;&lt;a href=&quot;//www.baidu.com/gaoji/preferences.html&quot;  onmousedown=&quot;return user_c({&#x27;fm&#x27;:&#x27;set&#x27;,&#x27;tab&#x27;:&#x27;setting&#x27;,&#x27;login&#x27;:&#x27;0&#x27;})&quot;&gt;æç´¢è®¾ç½®&lt;/a&gt;|&lt;a id=&quot;btop&quot; href=&quot;/&quot;  onmousedown=&quot;return user_c({&#x27;fm&#x27;:&#x27;set&#x27;,&#x27;tab&#x27;:&#x27;index&#x27;,&#x27;login&#x27;:&#x27;0&#x27;})&quot;&gt;ç¾åº¦é¦é¡µ&lt;/a&gt;|&lt;a id=&quot;lb&quot; href=&quot;https://passport.baidu.com/v2/?login&amp;tpl=mn&amp;u=http%3A%2F%2Fwww.baidu.com%2F&quot; onclick=&quot;return false;&quot;  onmousedown=&quot;return user_c({&#x27;fm&#x27;:&#x27;set&#x27;,&#x27;tab&#x27;:&#x27;login&#x27;})&quot;&gt;ç»å½&lt;/a&gt;&lt;a href=&quot;https://passport.baidu.com/v2/?reg&amp;regType=1&amp;tpl=mn&amp;u=http%3A%2F%2Fwww.baidu.com%2F&quot;  onmousedown=&quot;return user_c({&#x27;fm&#x27;:&#x27;set&#x27;,&#x27;tab&#x27;:&#x27;reg&#x27;})&quot; target=&quot;_blank&quot; class=&quot;reg&quot;&gt;æ³¨å&lt;/a&gt;&lt;/div&gt;&lt;div id=&quot;head&quot;&gt;&lt;div class=&quot;s_nav&quot;&gt;&lt;a href=&quot;/&quot; class=&quot;s_logo&quot; onmousedown=&quot;return c({&#x27;fm&#x27;:&#x27;tab&#x27;,&#x27;tab&#x27;:&#x27;logo&#x27;})&quot;&gt;&lt;img src=&quot;//www.baidu.com/img/baidu_jgylogo3.gif&quot; width=&quot;117&quot; height=&quot;38&quot; border=&quot;0&quot; alt=&quot;å°ç¾åº¦é¦é¡µ&quot; title=&quot;å°ç¾åº¦é¦é¡µ&quot;&gt;&lt;/a&gt;&lt;div class=&quot;s_tab&quot; id=&quot;s_tab&quot;&gt;&lt;a href=&quot;http://news.baidu.com/ns?cl=2&amp;rn=20&amp;tn=news&amp;word=&quot; wdfield=&quot;word&quot;  onmousedown=&quot;return c({&#x27;fm&#x27;:&#x27;tab&#x27;,&#x27;tab&#x27;:&#x27;news&#x27;})&quot;&gt;æ°é»&lt;/a&gt;&amp;#12288;&lt;b&gt;ç½é¡µ&lt;/b&gt;&amp;#12288;&lt;a href=&quot;http://tieba.baidu.com/f?kw=&amp;fr=wwwt&quot; wdfield=&quot;kw&quot;  onmousedown=&quot;return c({&#x27;fm&#x27;:&#x27;tab&#x27;,&#x27;tab&#x27;:&#x27;tieba&#x27;})&quot;&gt;è´´å§&lt;/a&gt;&amp;#12288;&lt;a href=&quot;http://zhidao.baidu.com/q?ct=17&amp;pn=0&amp;tn=ikaslist&amp;rn=10&amp;word=&amp;fr=wwwt&quot; wdfield=&quot;word&quot;  onmousedown=&quot;return c({&#x27;fm&#x27;:&#x27;tab&#x27;,&#x27;tab&#x27;:&#x27;zhidao&#x27;})&quot;&gt;ç¥é&lt;/a&gt;&amp;#12288;&lt;a href=&quot;http://music.baidu.com/search?fr=ps&amp;key=&quot; wdfield=&quot;key&quot;  onmousedown=&quot;return c({&#x27;fm&#x27;:&#x27;tab&#x27;,&#x27;tab&#x27;:&#x27;music&#x27;})&quot;&gt;é³ä¹&lt;/a&gt;&amp;#12288;&lt;a href=&quot;http://image.baidu.com/i?tn=baiduimage&amp;ps=1&amp;ct=201326592&amp;lm=-1&amp;cl=2&amp;nc=1&amp;word=&quot; wdfield=&quot;word&quot;  onmousedown=&quot;return c({&#x27;fm&#x27;:&#x27;tab&#x27;,&#x27;tab&#x27;:&#x27;pic&#x27;})&quot;&gt;å¾ç&lt;/a&gt;&amp;#12288;&lt;a href=&quot;http://v.baidu.com/v?ct=301989888&amp;rn=20&amp;pn=0&amp;db=0&amp;s=25&amp;word=&quot; wdfield=&quot;word&quot;   onmousedown=&quot;return c({&#x27;fm&#x27;:&#x27;tab&#x27;,&#x27;tab&#x27;:&#x27;video&#x27;})&quot;&gt;è§é¢&lt;/a&gt;&amp;#12288;&lt;a href=&quot;http://map.baidu.com/m?word=&amp;fr=ps01000&quot; wdfield=&quot;word&quot;  onmousedown=&quot;return c({&#x27;fm&#x27;:&#x27;tab&#x27;,&#x27;tab&#x27;:&#x27;map&#x27;})&quot;&gt;å°å¾&lt;/a&gt;&amp;#12288;&lt;a href=&quot;http://wenku.baidu.com/search?word=&amp;lm=0&amp;od=0&quot; wdfield=&quot;word&quot;  onmousedown=&quot;return c({&#x27;fm&#x27;:&#x27;tab&#x27;,&#x27;tab&#x27;:&#x27;wenku&#x27;})&quot;&gt;æåº&lt;/a&gt;&amp;#12288;&lt;a href=&quot;//www.baidu.com/more/&quot;  onmousedown=&quot;return c({&#x27;fm&#x27;:&#x27;tab&#x27;,&#x27;tab&#x27;:&#x27;more&#x27;})&quot;&gt;æ´å¤Â»&lt;/a&gt;&lt;/div&gt;&lt;/div&gt;&lt;form id=&quot;form&quot; name=&quot;f&quot; action=&quot;/s&quot; class=&quot;fm&quot; &gt;&lt;input type=&quot;hidden&quot; name=&quot;ie&quot; value=&quot;utf-8&quot;&gt;&lt;input type=&quot;hidden&quot; name=&quot;f&quot; value=&quot;8&quot;&gt;&lt;input type=&quot;hidden&quot; name=&quot;rsv_bp&quot; value=&quot;1&quot;&gt;&lt;span class=&quot;bg s_ipt_wr&quot;&gt;&lt;input name=&quot;wd&quot; id=&quot;kw&quot; class=&quot;s_ipt&quot; value=&quot;&quot; maxlength=&quot;100&quot;&gt;&lt;/span&gt;&lt;span class=&quot;bg s_btn_wr&quot;&gt;&lt;input type=&quot;submit&quot; id=&quot;su&quot; value=&quot;ç¾åº¦ä¸ä¸&quot; class=&quot;bg s_btn&quot; onmousedown=&quot;this.className=&#x27;bg s_btn s_btn_h&#x27;&quot; onmouseout=&quot;this.className=&#x27;bg s_btn&#x27;&quot;&gt;&lt;/span&gt;&lt;span class=&quot;tools&quot;&gt;&lt;span id=&quot;mHolder&quot;&gt;&lt;div id=&quot;mCon&quot;&gt;&lt;span&gt;è¾å¥æ³&lt;/span&gt;&lt;/div&gt;&lt;ul id=&quot;mMenu&quot;&gt;&lt;li&gt;&lt;a href=&quot;javascript:;&quot; name=&quot;ime_hw&quot;&gt;æå&lt;/a&gt;&lt;/li&gt;&lt;li&gt;&lt;a href=&quot;javascript:;&quot; name=&quot;ime_py&quot;&gt;æ¼é³&lt;/a&gt;&lt;/li&gt;&lt;li class=&quot;ln&quot;&gt;&lt;/li&gt;&lt;li&gt;&lt;a href=&quot;javascript:;&quot; name=&quot;ime_cl&quot;&gt;å³é­&lt;/a&gt;&lt;/li&gt;&lt;/ul&gt;&lt;/span&gt;&lt;span class=&quot;shouji&quot;&gt;&lt;strong&gt;æ¨è&amp;nbsp;:&amp;nbsp;&lt;/strong&gt;&lt;a href=&quot;http://w.x.baidu.com/go/mini/8/10000020&quot; onmousedown=&quot;return ns_c({&#x27;fm&#x27;:&#x27;behs&#x27;,&#x27;tab&#x27;:&#x27;bdbrowser&#x27;})&quot;&gt;ç¾åº¦æµè§å¨ï¼æå¼ç½é¡µå¿«2ç§ï¼&lt;/a&gt;&lt;/span&gt;&lt;/span&gt;&lt;/form&gt;&lt;/div&gt;&lt;div id=&quot;content&quot;&gt;&lt;div id=&quot;u1&quot;&gt;&lt;a href=&quot;http://news.baidu.com&quot; name=&quot;tj_trnews&quot; class=&quot;mnav&quot;&gt;æ°é»&lt;/a&gt;&lt;a href=&quot;http://www.hao123.com&quot; name=&quot;tj_trhao123&quot; class=&quot;mnav&quot;&gt;hao123&lt;/a&gt;&lt;a href=&quot;http://map.baidu.com&quot; name=&quot;tj_trmap&quot; class=&quot;mnav&quot;&gt;å°å¾&lt;/a&gt;&lt;a href=&quot;http://v.baidu.com&quot; name=&quot;tj_trvideo&quot; class=&quot;mnav&quot;&gt;è§é¢&lt;/a&gt;&lt;a href=&quot;http://tieba.baidu.com&quot; name=&quot;tj_trtieba&quot; class=&quot;mnav&quot;&gt;è´´å§&lt;/a&gt;&lt;a href=&quot;https://passport.baidu.com/v2/?login&amp;tpl=mn&amp;u=http%3A%2F%2Fwww.baidu.com%2F&quot; name=&quot;tj_login&quot; id=&quot;lb&quot; onclick=&quot;return false;&quot;&gt;ç»å½&lt;/a&gt;&lt;a href=&quot;//www.baidu.com/gaoji/preferences.html&quot; name=&quot;tj_settingicon&quot; id=&quot;pf&quot;&gt;è®¾ç½®&lt;/a&gt;&lt;a href=&quot;//www.baidu.com/more/&quot; name=&quot;tj_briicon&quot; id=&quot;bri&quot;&gt;æ´å¤äº§å&lt;/a&gt;&lt;/div&gt;&lt;div id=&quot;m&quot;&gt;&lt;p id=&quot;lg&quot;&gt;&lt;img src=&quot;//www.baidu.com/img/bd_logo.png&quot; width=&quot;270&quot; height=&quot;129&quot;&gt;&lt;/p&gt;&lt;p id=&quot;nv&quot;&gt;&lt;a href=&quot;http://news.baidu.com&quot;&gt;æ°&amp;nbsp;é»&lt;/a&gt;ã&lt;b&gt;ç½&amp;nbsp;é¡µ&lt;/b&gt;ã&lt;a href=&quot;http://tieba.baidu.com&quot;&gt;è´´&amp;nbsp;å§&lt;/a&gt;ã&lt;a href=&quot;http://zhidao.baidu.com&quot;&gt;ç¥&amp;nbsp;é&lt;/a&gt;ã&lt;a href=&quot;http://music.baidu.com&quot;&gt;é³&amp;nbsp;ä¹&lt;/a&gt;ã&lt;a href=&quot;http://image.baidu.com&quot;&gt;å¾&amp;nbsp;ç&lt;/a&gt;ã&lt;a href=&quot;http://v.baidu.com&quot;&gt;è§&amp;nbsp;é¢&lt;/a&gt;ã&lt;a href=&quot;http://map.baidu.com&quot;&gt;å°&amp;nbsp;å¾&lt;/a&gt;&lt;/p&gt;&lt;div id=&quot;fm&quot;&gt;&lt;form id=&quot;form1&quot; name=&quot;f1&quot; action=&quot;/s&quot; class=&quot;fm&quot;&gt;&lt;span class=&quot;bg s_ipt_wr&quot;&gt;&lt;input type=&quot;text&quot; name=&quot;wd&quot; id=&quot;kw1&quot; maxlength=&quot;100&quot; class=&quot;s_ipt&quot;&gt;&lt;/span&gt;&lt;input type=&quot;hidden&quot; name=&quot;rsv_bp&quot; value=&quot;0&quot;&gt;&lt;input type=hidden name=ch value=&quot;&quot;&gt;&lt;input type=hidden name=tn value=&quot;baidu&quot;&gt;&lt;input type=hidden name=bar value=&quot;&quot;&gt;&lt;input type=&quot;hidden&quot; name=&quot;rsv_spt&quot; value=&quot;3&quot;&gt;&lt;input type=&quot;hidden&quot; name=&quot;ie&quot; value=&quot;utf-8&quot;&gt;&lt;span class=&quot;bg s_btn_wr&quot;&gt;&lt;input type=&quot;submit&quot; value=&quot;ç¾åº¦ä¸ä¸&quot; id=&quot;su1&quot; class=&quot;bg s_btn&quot; onmousedown=&quot;this.className=&#x27;bg s_btn s_btn_h&#x27;&quot; onmouseout=&quot;this.className=&#x27;bg s_btn&#x27;&quot;&gt;&lt;/span&gt;&lt;/form&gt;&lt;span class=&quot;tools&quot;&gt;&lt;span id=&quot;mHolder1&quot;&gt;&lt;div id=&quot;mCon1&quot;&gt;&lt;span&gt;è¾å¥æ³&lt;/span&gt;&lt;/div&gt;&lt;/span&gt;&lt;/span&gt;&lt;ul id=&quot;mMenu1&quot;&gt;&lt;div class=&quot;mMenu1-tip-arrow&quot;&gt;&lt;em&gt;&lt;/em&gt;&lt;ins&gt;&lt;/ins&gt;&lt;/div&gt;&lt;li&gt;&lt;a href=&quot;javascript:;&quot; name=&quot;ime_hw&quot;&gt;æå&lt;/a&gt;&lt;/li&gt;&lt;li&gt;&lt;a href=&quot;javascript:;&quot; name=&quot;ime_py&quot;&gt;æ¼é³&lt;/a&gt;&lt;/li&gt;&lt;li class=&quot;ln&quot;&gt;&lt;/li&gt;&lt;li&gt;&lt;a href=&quot;javascript:;&quot; name=&quot;ime_cl&quot;&gt;å³é­&lt;/a&gt;&lt;/li&gt;&lt;/ul&gt;&lt;/div&gt;&lt;p id=&quot;lk&quot;&gt;&lt;a href=&quot;http://baike.baidu.com&quot;&gt;ç¾ç§&lt;/a&gt;ã&lt;a href=&quot;http://wenku.baidu.com&quot;&gt;æåº&lt;/a&gt;ã&lt;a href=&quot;http://www.hao123.com&quot;&gt;hao123&lt;/a&gt;&lt;span&gt;&amp;nbsp;|&amp;nbsp;&lt;a href=&quot;//www.baidu.com/more/&quot;&gt;æ´å¤&amp;gt;&amp;gt;&lt;/a&gt;&lt;/span&gt;&lt;/p&gt;&lt;p id=&quot;lm&quot;&gt;&lt;/p&gt;&lt;/div&gt;&lt;/div&gt;&lt;div id=&quot;ftCon&quot;&gt;&lt;div id=&quot;ftConw&quot;&gt;&lt;p id=&quot;lh&quot;&gt;&lt;a id=&quot;seth&quot; onClick=&quot;h(this)&quot; href=&quot;/&quot; onmousedown=&quot;return ns_c({&#x27;fm&#x27;:&#x27;behs&#x27;,&#x27;tab&#x27;:&#x27;homepage&#x27;,&#x27;pos&#x27;:0})&quot;&gt;æç¾åº¦è®¾ä¸ºä¸»é¡µ&lt;/a&gt;&lt;a id=&quot;setf&quot; href=&quot;//www.baidu.com/cache/sethelp/index.html&quot; onmousedown=&quot;return ns_c({&#x27;fm&#x27;:&#x27;behs&#x27;,&#x27;tab&#x27;:&#x27;favorites&#x27;,&#x27;pos&#x27;:0})&quot; target=&quot;_blank&quot;&gt;æç¾åº¦è®¾ä¸ºä¸»é¡µ&lt;/a&gt;&lt;a onmousedown=&quot;return ns_c({&#x27;fm&#x27;:&#x27;behs&#x27;,&#x27;tab&#x27;:&#x27;tj_about&#x27;})&quot; href=&quot;http://home.baidu.com&quot;&gt;å³äºç¾åº¦&lt;/a&gt;&lt;a onmousedown=&quot;return ns_c({&#x27;fm&#x27;:&#x27;behs&#x27;,&#x27;tab&#x27;:&#x27;tj_about_en&#x27;})&quot; href=&quot;http://ir.baidu.com&quot;&gt;About Baidu&lt;/a&gt;&lt;/p&gt;&lt;p id=&quot;cp&quot;&gt;&amp;copy;2018&amp;nbsp;Baidu&amp;nbsp;&lt;a href=&quot;/duty/&quot; name=&quot;tj_duty&quot;&gt;ä½¿ç¨ç¾åº¦åå¿è¯»&lt;/a&gt;&amp;nbsp;äº¬ICPè¯030173å·&amp;nbsp;&lt;img src=&quot;http://s1.bdstatic.com/r/www/cache/static/global/img/gs_237f015b.gif&quot;&gt;&lt;/p&gt;&lt;/div&gt;&lt;/div&gt;&lt;div id=&quot;wrapper_wrapper&quot;&gt;&lt;/div&gt;&lt;/div&gt;&lt;div class=&quot;c-tips-container&quot; id=&quot;c-tips-container&quot;&gt;&lt;/div&gt;
+&lt;script&gt;window.__async_strategy=2;&lt;/script&gt;
+&lt;script&gt;var bds={se:{},su:{urdata:[],urSendClick:function(){}},util:{},use:{},comm : {domain:&quot;http://www.baidu.com&quot;,ubsurl : &quot;http://sclick.baidu.com/w.gif&quot;,tn:&quot;baidu&quot;,queryEnc:&quot;&quot;,queryId:&quot;&quot;,inter:&quot;&quot;,templateName:&quot;baidu&quot;,sugHost : &quot;http://suggestion.baidu.com/su&quot;,query : &quot;&quot;,qid : &quot;&quot;,cid : &quot;&quot;,sid : &quot;&quot;,indexSid : &quot;&quot;,stoken : &quot;&quot;,serverTime : &quot;&quot;,user : &quot;&quot;,username : &quot;&quot;,loginAction : [],useFavo : &quot;&quot;,pinyin : &quot;&quot;,favoOn : &quot;&quot;,curResultNum:&quot;&quot;,rightResultExist:false,protectNum:0,zxlNum:0,pageNum:1,pageSize:10,newindex:0,async:1,maxPreloadThread:5,maxPreloadTimes:10,preloadMouseMoveDistance:5,switchAddMask:false,isDebug:false,ishome : 1},_base64:{domain : &quot;http://b1.bdstatic.com/&quot;,b64Exp : -1,pdc : 0}};var name,navigate,al_arr=[];var selfOpen = window.open;eval(&quot;var open = selfOpen;&quot;);var isIE=navigator.userAgent.indexOf(&quot;MSIE&quot;)!=-1&amp;&amp;!window.opera;var E = bds.ecom= {};bds.se.mon = {&#x27;loadedItems&#x27;:[],&#x27;load&#x27;:function(){},&#x27;srvt&#x27;:-1};try {bds.se.mon.srvt = parseInt(document.cookie.match(new RegExp(&quot;(^| )BDSVRTM=([^;]*)(;|$)&quot;))[2]);document.cookie=&quot;BDSVRTM=;expires=Sat, 01 Jan 2000 00:00:00 GMT&quot;; }catch(e){}&lt;/script&gt;
+&lt;script&gt;if(!location.hash.match(/[^a-zA-Z0-9]wd=/)){document.getElementById(&quot;ftCon&quot;).style.display=&#x27;block&#x27;;document.getElementById(&quot;u1&quot;).style.display=&#x27;block&#x27;;document.getElementById(&quot;content&quot;).style.display=&#x27;block&#x27;;document.getElementById(&quot;wrapper&quot;).style.display=&#x27;block&#x27;;setTimeout(function(){try{document.getElementById(&quot;kw1&quot;).focus();document.getElementById(&quot;kw1&quot;).parentNode.className += &#x27; iptfocus&#x27;;}catch(e){}},0);}&lt;/script&gt;
+&lt;script type=&quot;text/javascript&quot; src=&quot;https://ss1.bdstatic.com/5eN1bjq8AAUYm2zgoY3K/r/www/cache/static/protocol/https/jquery/jquery-1.10.2.min_f2fb5194.js&quot;&gt;&lt;/script&gt;
+&lt;script&gt;(function(){var index_content = $(&#x27;#content&#x27;);var index_foot= $(&#x27;#ftCon&#x27;);var index_css= $(&#x27;head [index]&#x27;);var index_u= $(&#x27;#u1&#x27;);var result_u= $(&#x27;#u&#x27;);var wrapper=$(&quot;#wrapper&quot;);window.index_on=function(){index_css.insertAfter(&quot;meta:eq(0)&quot;);result_common_css.remove();result_aladdin_css.remove();result_sug_css.remove();index_content.show();index_foot.show();index_u.show();result_u.hide();wrapper.show();if(bds.su&amp;&amp;bds.su.U&amp;&amp;bds.su.U.homeInit){bds.su.U.homeInit();}setTimeout(function(){try{$(&#x27;#kw1&#x27;).get(0).focus();window.sugIndex.start();}catch(e){}},0);if(typeof initIndex==&#x27;function&#x27;){initIndex();}};window.index_off=function(){index_css.remove();index_content.hide();index_foot.hide();index_u.hide();result_u.show();result_aladdin_css.insertAfter(&quot;meta:eq(0)&quot;);result_common_css.insertAfter(&quot;meta:eq(0)&quot;);result_sug_css.insertAfter(&quot;meta:eq(0)&quot;);wrapper.show();};})();&lt;/script&gt;
+&lt;script&gt;window.__switch_add_mask=1;&lt;/script&gt;
+&lt;script type=&quot;text/javascript&quot; src=&quot;https://ss1.bdstatic.com/5eN1bjq8AAUYm2zgoY3K/r/www/cache/static/global/js/instant_search_newi_redirect1_20bf4036.js&quot;&gt;&lt;/script&gt;
+&lt;script&gt;initPreload();$(&quot;#u,#u1&quot;).delegate(&quot;#lb&quot;,&#x27;click&#x27;,function(){try{bds.se.login.open();}catch(e){}});if(navigator.cookieEnabled){document.cookie=&quot;NOJS=;expires=Sat, 01 Jan 2000 00:00:00 GMT&quot;;}&lt;/script&gt;
+&lt;script&gt;$(function(){for(i=0;i&lt;3;i++){u($($(&#x27;.s_ipt_wr&#x27;)[i]),$($(&#x27;.s_ipt&#x27;)[i]),$($(&#x27;.s_btn_wr&#x27;)[i]),$($(&#x27;.s_btn&#x27;)[i]));}function u(iptwr,ipt,btnwr,btn){if(iptwr &amp;&amp; ipt){iptwr.on(&#x27;mouseover&#x27;,function(){iptwr.addClass(&#x27;ipthover&#x27;);}).on(&#x27;mouseout&#x27;,function(){iptwr.removeClass(&#x27;ipthover&#x27;);}).on(&#x27;click&#x27;,function(){ipt.focus();});ipt.on(&#x27;focus&#x27;,function(){iptwr.addClass(&#x27;iptfocus&#x27;);}).on(&#x27;blur&#x27;,function(){iptwr.removeClass(&#x27;iptfocus&#x27;);}).on(&#x27;render&#x27;,function(e){var $s = iptwr.parent().find(&#x27;.bdsug&#x27;);var l = $s.find(&#x27;li&#x27;).length;if(l&gt;=5){$s.addClass(&#x27;bdsugbg&#x27;);}else{$s.removeClass(&#x27;bdsugbg&#x27;);}});}if(btnwr &amp;&amp; btn){btnwr.on(&#x27;mouseover&#x27;,function(){btn.addClass(&#x27;btnhover&#x27;);}).on(&#x27;mouseout&#x27;,function(){btn.removeClass(&#x27;btnhover&#x27;);});}}});&lt;/script&gt;
+&lt;script type=&quot;text/javascript&quot; src=&quot;https://ss1.bdstatic.com/5eN1bjq8AAUYm2zgoY3K/r/www/cache/static/home/js/bri_7f1fa703.js&quot;&gt;&lt;/script&gt;
+&lt;script&gt;(function(){var _init=false;window.initIndex=function(){if(_init){return;}_init=true;var w=window,d=document,n=navigator,k=d.f1.wd,a=d.getElementById(&quot;nv&quot;).getElementsByTagName(&quot;a&quot;),isIE=n.userAgent.indexOf(&quot;MSIE&quot;)!=-1&amp;&amp;!window.opera;(function(){if(/q=([^&amp;]+)/.test(location.search)){k.value=decodeURIComponent(RegExp[&quot;\x241&quot;])}})();(function(){var u = G(&quot;u1&quot;).getElementsByTagName(&quot;a&quot;), nv = G(&quot;nv&quot;).getElementsByTagName(&quot;a&quot;), lk = G(&quot;lk&quot;).getElementsByTagName(&quot;a&quot;), un = &quot;&quot;;var tj_nv = [&quot;news&quot;,&quot;tieba&quot;,&quot;zhidao&quot;,&quot;mp3&quot;,&quot;img&quot;,&quot;video&quot;,&quot;map&quot;];var tj_lk = [&quot;baike&quot;,&quot;wenku&quot;,&quot;hao123&quot;,&quot;more&quot;];un = bds.comm.user == &quot;&quot; ? &quot;&quot; : bds.comm.user;function _addTJ(obj){addEV(obj, &quot;mousedown&quot;, function(e){var e = e || window.event;var target = e.target || e.srcElement;if(target.name){ns_c({&#x27;fm&#x27;:&#x27;behs&#x27;,&#x27;tab&#x27;:target.name,&#x27;un&#x27;:encodeURIComponent(un)});}});}for(var i = 0; i &lt; u.length; i++){_addTJ(u[i]);}for(var i = 0; i &lt; nv.length; i++){nv[i].name = &#x27;tj_&#x27; + tj_nv[i];}for(var i = 0; i &lt; lk.length; i++){lk[i].name = &#x27;tj_&#x27; + tj_lk[i];}})();(function() {var links = {&#x27;tj_news&#x27;: [&#x27;word&#x27;, &#x27;http://news.baidu.com/ns?tn=news&amp;cl=2&amp;rn=20&amp;ct=1&amp;ie=utf-8&#x27;],&#x27;tj_tieba&#x27;: [&#x27;kw&#x27;, &#x27;http://tieba.baidu.com/f?ie=utf-8&#x27;],&#x27;tj_zhidao&#x27;: [&#x27;word&#x27;, &#x27;http://zhidao.baidu.com/search?pn=0&amp;rn=10&amp;lm=0&#x27;],&#x27;tj_mp3&#x27;: [&#x27;key&#x27;, &#x27;http://music.baidu.com/search?fr=ps&amp;ie=utf-8&#x27;],&#x27;tj_img&#x27;: [&#x27;word&#x27;, &#x27;http://image.baidu.com/i?ct=201326592&amp;cl=2&amp;nc=1&amp;lm=-1&amp;st=-1&amp;tn=baiduimage&amp;istype=2&amp;fm=&amp;pv=&amp;z=0&amp;ie=utf-8&#x27;],&#x27;tj_video&#x27;: [&#x27;word&#x27;, &#x27;http://video.baidu.com/v?ct=301989888&amp;s=25&amp;ie=utf-8&#x27;],&#x27;tj_map&#x27;: [&#x27;wd&#x27;, &#x27;http://map.baidu.com/?newmap=1&amp;ie=utf-8&amp;s=s&#x27;],&#x27;tj_baike&#x27;: [&#x27;word&#x27;, &#x27;http://baike.baidu.com/search/word?pic=1&amp;sug=1&amp;enc=utf8&#x27;],&#x27;tj_wenku&#x27;: [&#x27;word&#x27;, &#x27;http://wenku.baidu.com/search?ie=utf-8&#x27;]};var domArr = [G(&#x27;nv&#x27;), G(&#x27;lk&#x27;),G(&#x27;cp&#x27;)],kw = G(&#x27;kw1&#x27;);for (var i = 0, l = domArr.length; i &lt; l; i++) {domArr[i].onmousedown = function(e) {e = e || window.event;var target = e.target || e.srcElement,name = target.getAttribute(&#x27;name&#x27;),items = links[name],reg = new RegExp(&#x27;^\\s+|\\s+\x24&#x27;),key = kw.value.replace(reg, &#x27;&#x27;);if (items) {if (key.length &gt; 0) {var wd = items[0], url = items[1],url = url + ( name === &#x27;tj_map&#x27; ? encodeURIComponent(&#x27;&amp;&#x27; + wd + &#x27;=&#x27; + key) : ( ( url.indexOf(&#x27;?&#x27;) &gt; 0 ? &#x27;&amp;&#x27; : &#x27;?&#x27; ) + wd + &#x27;=&#x27; + encodeURIComponent(key) ) );target.href = url;} else {target.href = target.href.match(new RegExp(&#x27;^http:\/\/.+\.baidu\.com&#x27;))[0];}}name &amp;&amp; ns_c({&#x27;fm&#x27;: &#x27;behs&#x27;,&#x27;tab&#x27;: name,&#x27;query&#x27;: encodeURIComponent(key),&#x27;un&#x27;: encodeURIComponent(bds.comm.user || &#x27;&#x27;) });};}})();};if(window.pageState==0){initIndex();}})();document.cookie = &#x27;IS_STATIC=1;expires=&#x27; + new Date(new Date().getTime() + 10*60*1000).toGMTString();&lt;/script&gt;
+&lt;/body&gt;&lt;/html&gt;</div></td></tr></tbody></table></body></html>
