@@ -5,7 +5,7 @@
 @author  : djcps
 #@file   : functions.py  excel函数助手
 #@ide    : PyCharm
-#@time   : 2019-05-30 15:45:16
+#@time   :
 '''
 import hashlib
 import uuid as uid

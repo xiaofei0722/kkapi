@@ -5,7 +5,7 @@
 @author  : djcps
 #@file   : logger.py
 #@ide    : PyCharm
-#@time   : 2019-03-26 16:00:49
+#@time   :
 '''
 import logging
 from logging import handlers

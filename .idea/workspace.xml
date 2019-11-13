@@ -2,11 +2,12 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="5a4f4ee4-7352-40aa-b2ed-f6249102455c" name="Default" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.pytest_cache/v/cache/nodeids" beforeDir="false" afterPath="$PROJECT_DIR$/.pytest_cache/v/cache/nodeids" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/conf/case.xlsx" beforeDir="false" afterPath="$PROJECT_DIR$/conf/case.xlsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/logs/all.log" beforeDir="false" afterPath="$PROJECT_DIR$/logs/all.log" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/test_case/test_case.py" beforeDir="false" afterPath="$PROJECT_DIR$/test_case/test_case.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/core/functions.py" beforeDir="false" afterPath="$PROJECT_DIR$/core/functions.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/core/logger.py" beforeDir="false" afterPath="$PROJECT_DIR$/core/logger.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/core/readExcel.py" beforeDir="false" afterPath="$PROJECT_DIR$/core/readExcel.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/core/testBase.py" beforeDir="false" afterPath="$PROJECT_DIR$/core/testBase.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/logs/all.log.2019-06-04" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/logs/all.log.2019-06-19" beforeDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -239,7 +240,7 @@
       <workItem from="1570963789748" duration="124000" />
       <workItem from="1573441306387" duration="7443000" />
       <workItem from="1573524956543" duration="16545000" />
-      <workItem from="1573609146895" duration="16659000" />
+      <workItem from="1573609146895" duration="16927000" />
     </task>
     <servers />
   </component>

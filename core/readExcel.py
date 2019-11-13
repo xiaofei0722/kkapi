@@ -5,7 +5,7 @@
 @author  : djcps
 #@file   : readExcel.py
 #@ide    : PyCharm
-#@time   : 2019-05-28 11:10:44
+#@time   :
 '''
 import xlrd
 from conf.settings import *

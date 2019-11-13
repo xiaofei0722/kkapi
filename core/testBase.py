@@ -5,7 +5,7 @@
 @author  : djcps
 #@file   : testBase.py
 #@ide    : PyCharm
-#@time   : 2019-05-05 10:23:02
+#@time   :
 '''
 import requests
 from json import dumps
