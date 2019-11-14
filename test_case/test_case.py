@@ -48,6 +48,13 @@ class Test(unittest.TestCase):
         logger.info("保存 {}=>{} 到全局变量池".format(key,value))
 
     def save_header(self,source,key,zzp):
+        '''
+        提取头部参数并保存至全局变量池
+        :param source: 目标字符串
+        :param key: 全局变量池的key
+        :param jexpr: 正则表达式
+        :return:
+        '''
         value = re.findall(zzp,source)
         value = "".join(value)
         self.saves[key] = value
@@ -140,10 +147,6 @@ class Test(unittest.TestCase):
         # cls.token = {"Authorization":"Bearer "+cls.token[0]}
 
 
-
-
-
-
     @classmethod
     def tearDownClass(cls):
         pass
@@ -155,8 +158,6 @@ class Test(unittest.TestCase):
         # headers = json.loads(headers)
         # headers.update(self.token)
         # headers = json.dumps(headers)
-
-
         url = self.build_param(url)
         headers = self.build_param(headers)
         params = self.build_param(params)
@@ -222,12 +223,16 @@ class Test(unittest.TestCase):
                     except Exception as e:
                         logger.error("接口请求异常,原因：{}".format(e))
                         raise e
-                    actual = "".join(actual)
+                    if isinstance(actual,list):
+                        actual = "".join(actual)
 
 
 
                 else:
-                    actual = re.findall(expr,res.text)[0]
+                    actual = re.findall(exprv,res.text)
+                    if isinstance(actual, list):
+                        actual = "".join(actual)
+
 
 
                 if verifytype == '相等':
