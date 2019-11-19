@@ -2,13 +2,10 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="5a4f4ee4-7352-40aa-b2ed-f6249102455c" name="Default" comment="">
-      <change afterPath="$PROJECT_DIR$/core/testrq.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.pytest_cache/v/cache/nodeids" beforeDir="false" afterPath="$PROJECT_DIR$/.pytest_cache/v/cache/nodeids" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/conf/case.xlsx" beforeDir="false" afterPath="$PROJECT_DIR$/conf/case.xlsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.pytest_cache/v/cache/lastfailed" beforeDir="false" afterPath="$PROJECT_DIR$/.pytest_cache/v/cache/lastfailed" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/core/readExcel.py" beforeDir="false" afterPath="$PROJECT_DIR$/core/readExcel.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/logs/all.log" beforeDir="false" afterPath="$PROJECT_DIR$/logs/all.log" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/test_case/.pytest_cache/v/cache/nodeids" beforeDir="false" afterPath="$PROJECT_DIR$/test_case/.pytest_cache/v/cache/nodeids" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/test_case/test_case.py" beforeDir="false" afterPath="$PROJECT_DIR$/test_case/test_case.py" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -202,8 +199,8 @@
       <item itemvalue="Python.runCase" />
       <item itemvalue="Python.121" />
       <item itemvalue="Python.123" />
-      <item itemvalue="Python tests.pytest for test_case.Test.test_" />
       <item itemvalue="Python.testrq" />
+      <item itemvalue="Python tests.pytest for test_case.Test.test_" />
       <item itemvalue="Python tests.pytest in test_case.py" />
     </list>
     <recent_temporary>
@@ -240,6 +237,7 @@
       <workItem from="1573640802840" duration="1947000" />
       <workItem from="1573646374175" duration="266000" />
       <workItem from="1573718629015" duration="5504000" />
+      <workItem from="1573729324800" duration="1764000" />
     </task>
     <servers />
   </component>
@@ -264,7 +262,7 @@
     <SUITE FILE_PATH="coverage/ApiTestFrameWork_master$testrq.coverage" NAME="testrq Coverage Results" MODIFIED="1573722200252" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/core" />
     <SUITE FILE_PATH="coverage/ApiTestFrameWork_master$pytest_in_test_case_py.coverage" NAME="pytest in test_case.py Coverage Results" MODIFIED="1573722864629" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/test_case" />
     <SUITE FILE_PATH="coverage/ApiTestFrameWork_master$121.coverage" NAME="121 Coverage Results" MODIFIED="1573543240127" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
-    <SUITE FILE_PATH="coverage/ApiTestFrameWork_master$runCase.coverage" NAME="runCase Coverage Results" MODIFIED="1573724091212" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/ApiTestFrameWork_master$runCase.coverage" NAME="runCase Coverage Results" MODIFIED="1573729578208" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/ApiTestFrameWork_master$123.coverage" NAME="123 Coverage Results" MODIFIED="1573549375484" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/test_case" />
   </component>
 </project>

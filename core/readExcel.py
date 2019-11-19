@@ -23,7 +23,7 @@ def read_excel(excel_path=BASE_PATH+"/conf/case.xlsx",sheet_name="Sheet1"):
     # 打开文件
     workbook = xlrd.open_workbook(excel_path)
     # 获取所有sheet
-    # print(workbook.sheet_names())  # [u'sheet1', u'sheet2']
+    print(workbook.sheet_names())  # [u'sheet1', u'sheet2']
 
     # 根据sheet索引或者名称获取sheet内容
     sheet = workbook.sheet_by_name(sheet_name) # sheet索引从0开始
