@@ -2,7 +2,7 @@ ddt==1.2.1
 enum34==1.1.6
 jsonpath==0.81
 public==2.0.1
-py==1.7.0
+py==1.10.0
 pycparser==2.19
 PyMySQL==0.9.3
 pypng==0.0.19
